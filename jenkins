@@ -7,6 +7,20 @@ node{
       def mvnHome =  tool name: 'maven-3', type: 'maven'   
       sh "${mvnHome}/bin/mvn package"
    }
+   stage('SonarQube Analysis') {
+        def mvnHome =  tool name: 'maven-3', type: 'maven'
+        withSonarQubeEnv('sonar-6') { 
+          sh "${mvnHome}/bin/mvn sonar:sonar"
+        }
+   }
+   stage('Quality check'){
+   timeout(time: 1, unit: 'minutes'){
+   def gg = waitForQualityGate()
+   if (gg.status != 'OK'){
+   error "Pipeline aborted due to quality gate failure: $(gg.status)"
+   }
+  }
+ } 
    stage('Email Notification'){
       mail bcc: '', body: '''Hello
       Welcome to jenkins email alerts
